@@ -14,7 +14,8 @@ const electionData = {
       {constituency:"Lucknow",state:"Uttar Pradesh",winner:"Rajnath Singh",party:"BJP",votes:612709,margin:135159},
       {constituency:"Thiruvananthapuram",state:"Kerala",winner:"Shashi Tharoor",party:"INC",votes:358155,margin:16077},
       {constituency:"Bangalore South",state:"Karnataka",winner:"Tejasvi Surya",party:"BJP",votes:750830,margin:277083},
-      {constituency:"Nagpur",state:"Maharashtra",winner:"Nitin Gadkari",party:"BJP",votes:655027,margin:137603}
+      {constituency:"Nagpur",state:"Maharashtra",winner:"Nitin Gadkari",party:"BJP",votes:655027,margin:137603},
+      {constituency:"Nandyal",state:"Andhra Pradesh",winner:"Byreddy Shabari",party:"TDP",votes:70131,margin:111975}
     ],
     parties: [
       {name:"BJP", seats:240},
