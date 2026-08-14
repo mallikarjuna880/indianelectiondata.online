@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Indian Election Data — explore election results, party performance, constituencies and vote share.">
+  <title>Indian Election Data</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="container nav">
+    <a class="brand" href="#"><span class="brand-mark">IED</span><span>Indian Election Data</span></a>
+    <button class="menu-btn" aria-label="Open menu">☰</button>
+    <nav>
+      <a href="#results">Results</a>
+      <a href="#parties">Parties</a>
+      <a href="#states">States</a>
+      <a href="#about">About</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <span class="eyebrow">INDIA • ELECTION DATA</span>
+      <h1>India's elections,<br><span>in one place.</span></h1>
+      <p>Explore election results, party performance, constituencies and vote-share trends through a clean, searchable dashboard.</p>
+      <div class="hero-actions">
+        <a class="btn primary" href="#results">Explore results</a>
+        <a class="btn secondary" href="#about">How it works</a>
+      </div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-card-top"><span>Latest dataset</span><strong>Demo / 2024</strong></div>
+      <div class="big-number">543</div>
+      <div class="muted">Lok Sabha constituencies</div>
+      <div class="mini-stats">
+        <div><strong>8</strong><span>sample parties</span></div>
+        <div><strong>4</strong><span>sample states</span></div>
+        <div><strong>100%</strong><span>responsive UI</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container stats" id="results">
+  <div class="stat"><span>Election</span><strong>Lok Sabha 2024</strong></div>
+  <div class="stat"><span>Seats</span><strong>543</strong></div>
+  <div class="stat"><span>Search</span><strong>Party / State / Seat</strong></div>
+  <div class="stat"><span>Status</span><strong class="live-dot">● Prototype</strong></div>
+</section>
+
+<section class="container section">
+  <div class="section-head">
+    <div><span class="eyebrow">RESULTS EXPLORER</span><h2>Find election results</h2></div>
+    <div class="controls">
+      <select id="electionSelect" aria-label="Election">
+        <option value="lokSabha2024">Lok Sabha 2024</option>
+      </select>
+      <input id="search" type="search" placeholder="Search party, state or constituency…">
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Constituency</th><th>State</th><th>Winner</th><th>Party</th><th>Votes</th><th>Margin</th></tr></thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+  <p class="note">Prototype dataset: replace <code>data.js</code> with verified official election data before publishing factual results.</p>
+</section>
+
+<section class="container section" id="parties">
+  <div class="section-head">
+    <div><span class="eyebrow">PARTY PERFORMANCE</span><h2>Seats by party</h2></div>
+  </div>
+  <div id="partyCards" class="party-grid"></div>
+</section>
+
+<section class="container section" id="states">
+  <div class="section-head">
+    <div><span class="eyebrow">STATE VIEW</span><h2>Explore by state</h2></div>
+  </div>
+  <div id="stateCards" class="state-grid"></div>
+</section>
+
+<section class="container section about" id="about">
+  <div>
+    <span class="eyebrow">ABOUT THE PROJECT</span>
+    <h2>A simple public-data platform for Indian elections.</h2>
+  </div>
+  <div>
+    <p>This first version is a static GitHub Pages website. It is designed so election datasets can be added later without rebuilding the entire interface.</p>
+    <p><strong>Next:</strong> official datasets, constituency pages, candidate profiles, historical comparisons, charts, map visualisation, SEO pages and a data-download section.</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="container footer">
+    <div><strong>Indian Election Data</strong><p>Independent data-exploration prototype.</p></div>
+    <div><span>Version 1.0 • Built for GitHub Pages</span></div>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
