@@ -1,0 +1,20 @@
+{
+  "name": "indianelectiondata-platform",
+  "private": true,
+  "workspaces": ["apps/api"],
+  "scripts": {
+    "dev": "npm run dev --workspace apps/api",
+    "build": "npm run build --workspace apps/api",
+    "typecheck": "npm run typecheck --workspace apps/api",
+    "prisma:generate": "prisma generate",
+    "prisma:validate": "prisma validate",
+    "prisma:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset"
+  },
+  "devDependencies": {
+    "prisma": "^6.16.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.2"
+  }
+}
