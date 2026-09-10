@@ -1,0 +1,22 @@
+name: platform-ci
+
+on:
+  push:
+    paths:
+      - 'platform/**'
+  pull_request:
+    paths:
+      - 'platform/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate platform files
+        run: |
+          test -f platform/prisma/schema.prisma
+          test -f platform/backend/src/server.ts
+          test -f platform/backend/src/auth.ts
+          test -f platform/.env.example
+          test -f platform/docker-compose.yml
