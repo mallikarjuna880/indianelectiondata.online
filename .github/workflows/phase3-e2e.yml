@@ -38,29 +38,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Install dependencies
-        working-directory: platform
         run: npm install
 
       - name: Generate Prisma client
-        working-directory: platform
         run: npm run prisma:generate
 
       - name: Validate Prisma schema
-        working-directory: platform
         run: npm run prisma:validate
 
       - name: Run Prisma migrations
-        working-directory: platform
-        run: npx prisma migrate deploy
+        run: npx prisma migrate deploy --schema platform/prisma/schema.prisma
 
       - name: Provision admin
-        working-directory: platform
-        run: npx tsx backend/src/provision-admin.ts
+        run: npm run admin:provision
 
       - name: Typecheck and build
-        working-directory: platform/backend
         run: npm run typecheck && npm run build
 
       - name: Start API
@@ -77,8 +72,7 @@ jobs:
           exit 1
 
       - name: Full Phase 3 smoke test
-        working-directory: platform
-        run: npx tsx backend/src/phase3-smoke.ts
+        run: npx tsx platform/backend/src/phase3-smoke.ts
 
       - name: API logs on failure
         if: failure()
