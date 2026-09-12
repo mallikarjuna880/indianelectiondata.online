@@ -31,7 +31,7 @@ export async function listConstituencies(stateId: string | undefined, query: Rec
 }
 
 export async function constituencyDetail(id: string) {
-  return prisma.constituency.findUnique({ where: { id }, include: { state: true, versions: { orderBy: { electionId: 'desc' } } } });
+  return prisma.constituency.findUnique({ where: { id }, include: { state: true, versions: { where: { election: { sourceStatus: 'PUBLISHED' } }, include: { election: true } } } });
 }
 
 export async function electionResults(electionId: string, query: Record<string, unknown>) {
@@ -47,23 +47,27 @@ export async function electionResults(electionId: string, query: Record<string, 
 }
 
 export async function constituencyResults(id: string, electionId?: string) {
-  const versionWhere = { constituencyId: id, ...(electionId ? { electionId } : {}) };
-  return prisma.constituencyVersion.findMany({ where: versionWhere, orderBy: { electionId: 'desc' }, include: { election: true, statistics: true, results: { orderBy: { position: 'asc' }, include: { candidate: true, party: true } } } });
+  const versionWhere = { constituencyId: id, election: { sourceStatus: 'PUBLISHED' as const }, ...(electionId ? { electionId } : {}) };
+  const versions = await prisma.constituencyVersion.findMany({ where: versionWhere, include: { election: true, statistics: true, results: { orderBy: { position: 'asc' }, include: { candidate: true, party: true } } } });
+  return versions.sort((a, b) => Number(b.election.year) - Number(a.election.year));
 }
 
 export async function constituencyHistory(id: string) {
-  const versions = await prisma.constituencyVersion.findMany({ where: { constituencyId: id }, orderBy: { electionId: 'desc' }, include: { election: true, statistics: true, results: { orderBy: { position: 'asc' }, take: 2, include: { candidate: true, party: true } } } });
-  return versions.map(v => ({ election: v.election, constituencyVersion: { id: v.id, name: v.name, number: v.constituencyNumber, reservedCategory: v.reservedCategory }, statistics: v.statistics[0] || null, winner: v.results[0] || null, runnerUp: v.results[1] || null, margin: v.results[0] && v.results[1] ? v.results[0].votes - v.results[1].votes : null }));
+  const versions = await prisma.constituencyVersion.findMany({ where: { constituencyId: id, election: { sourceStatus: 'PUBLISHED' } }, include: { election: true, statistics: true, results: { orderBy: { position: 'asc' }, take: 2, include: { candidate: true, party: true } } } });
+  return versions.sort((a, b) => Number(b.election.year) - Number(a.election.year)).map(v => ({ election: v.election, constituencyVersion: { id: v.id, name: v.name, number: v.constituencyNumber, reservedCategory: v.reservedCategory }, statistics: v.statistics[0] || null, winner: v.results[0] || null, runnerUp: v.results[1] || null, margin: v.results[0] && v.results[1] ? v.results[0].votes - v.results[1].votes : null }));
 }
 
 export async function partyPerformance(partyId: string, query: Record<string, unknown>) {
   const { skip, take, page, pageSize } = pagination(query);
   const year = Number(query.year) || undefined;
   const electionType = String(query.electionType || '');
-  const where = { partyId, ...(year ? { election: { year } } : {}), ...(electionType ? { election: { ...(year ? { year } : {}), electionType: electionType as any } } : {}) };
+  const electionWhere: Record<string, unknown> = { sourceStatus: 'PUBLISHED' };
+  if (year) electionWhere.year = year;
+  if (electionType) electionWhere.electionType = electionType as any;
+  const where = { partyId, election: electionWhere };
   const grouped = await prisma.candidateResult.groupBy({ by: ['electionId'], where, _sum: { votes: true }, _count: { _all: true } });
   const ids = grouped.map(x => x.electionId);
-  const elections = await prisma.election.findMany({ where: { id: { in: ids } }, orderBy: [{ year: 'desc' }, { name: 'asc' }] });
+  const elections = await prisma.election.findMany({ where: { id: { in: ids }, sourceStatus: 'PUBLISHED' }, orderBy: [{ year: 'desc' }, { name: 'asc' }] });
   const rows = elections.map(e => { const g = grouped.find(x => x.electionId === e.id); return { election: e, votes: g?._sum.votes || 0, candidates: g?._count._all || 0 }; }).slice(skip, skip + take);
   return { data: rows, pagination: pageMeta(page, pageSize, grouped.length) };
 }
@@ -76,7 +80,7 @@ export async function search(query: Record<string, unknown>) {
     prisma.state.findMany({ where: { name: { contains: q, mode: 'insensitive' } }, take: 100 }),
     prisma.constituency.findMany({ where: { name: { contains: q, mode: 'insensitive' } }, take: 100, include: { state: true } }),
     prisma.candidate.findMany({ where: { name: { contains: q, mode: 'insensitive' } }, take: 100 }),
-    prisma.party.findMany({ where: { OR: [{ name: { contains: q, mode: 'insensitive' } }, { abbreviation: { contains: q, mode: 'insensitive' } }] }, take: 100 })
+    prisma.party.findMany({ where: { OR: [{ name: { contains: q, mode: 'insensitive' } }, { abbreviation: { contains: q, mode: 'insensitive' } }] , take: 100 })
   ]);
   const all = [...states.map(x => ({ type: 'state', id: x.id, name: x.name, state: null })), ...constituencies.map(x => ({ type: 'constituency', id: x.id, name: x.name, state: x.state.name })), ...candidates.map(x => ({ type: 'candidate', id: x.id, name: x.name, state: null })), ...parties.map(x => ({ type: 'party', id: x.id, name: x.name, abbreviation: x.abbreviation }))];
   return { data: all.slice(skip, skip + take), pagination: pageMeta(page, pageSize, all.length) };
