@@ -10,6 +10,7 @@ datasource db {
 enum ElectionType { LOK_SABHA ASSEMBLY OTHER }
 enum SourceStatus { DRAFT REVIEWED PUBLISHED }
 enum UserRole { SUPER_ADMIN ADMIN DATA_EDITOR }
+enum ImportStatus { UPLOADED VALIDATED IN_REVIEW APPROVED PUBLISHED REJECTED }
 
 model Election {
   id          String       @id @default(uuid()) @db.Uuid
@@ -22,6 +23,7 @@ model Election {
   results     CandidateResult[]
   statistics  ConstituencyStatistic[]
   versions    ConstituencyVersion[]
+  importBatches ImportBatch[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   @@index([electionType, year])
@@ -129,6 +131,7 @@ model DataSource {
   retrievedAt     DateTime @default(now())
   sourceType      String?
   results         ResultSource[]
+  importBatches   ImportBatch[]
 }
 
 model ResultSource {
@@ -148,6 +151,8 @@ model User {
   createdAt    DateTime @default(now())
   sessions     Session[]
   auditLogs    AuditLog[]
+  imports      ImportBatch[] @relation("UploadedImports")
+  reviews      ImportReview[]
 }
 
 model Session {
@@ -172,4 +177,53 @@ model AuditLog {
   user       User? @relation(fields: [userId], references: [id], onDelete: SetNull)
   @@index([entityType, entityId])
   @@index([createdAt])
+}
+
+model ImportBatch {
+  id             String       @id @default(uuid()) @db.Uuid
+  filename       String
+  fileType       String
+  status         ImportStatus @default(UPLOADED)
+  electionId     String?      @db.Uuid
+  sourceId       String?      @db.Uuid
+  uploadedById   String       @db.Uuid
+  totalRows      Int          @default(0)
+  validRows      Int          @default(0)
+  errorRows      Int          @default(0)
+  metadata       Json?
+  uploadedAt     DateTime     @default(now())
+  validatedAt    DateTime?
+  approvedAt     DateTime?
+  publishedAt    DateTime?
+  uploadedBy     User         @relation("UploadedImports", fields: [uploadedById], references: [id])
+  election       Election?    @relation(fields: [electionId], references: [id])
+  source         DataSource?  @relation(fields: [sourceId], references: [id])
+  rows           ImportRow[]
+  reviews        ImportReview[]
+  @@index([status, uploadedAt])
+}
+
+model ImportRow {
+  id           String      @id @default(uuid()) @db.Uuid
+  batchId      String      @db.Uuid
+  rowNumber    Int
+  payload      Json
+  status       String      @default("PENDING")
+  errors       Json?
+  normalized   Json?
+  batch        ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  @@unique([batchId, rowNumber])
+  @@index([batchId, status])
+}
+
+model ImportReview {
+  id          String      @id @default(uuid()) @db.Uuid
+  batchId     String      @db.Uuid
+  reviewerId  String      @db.Uuid
+  decision    String
+  comment     String?
+  createdAt   DateTime    @default(now())
+  batch       ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  reviewer    User        @relation(fields: [reviewerId], references: [id])
+  @@index([batchId, createdAt])
 }
