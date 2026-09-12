@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { prisma } from './db.js';
 
 const baseUrl = process.env.SMOKE_BASE_URL || 'http://127.0.0.1:4000';
@@ -16,7 +17,7 @@ function cookieFrom(response: Response) {
   return setCookie.split(';', 1)[0];
 }
 
-const suffix = crypto.randomUUID().slice(0, 8);
+const suffix = randomUUID().slice(0, 8);
 const state = await prisma.state.create({ data: { name: `CI Test State ${suffix}`, abbreviation: `C${suffix.slice(0, 2)}`, stateCode: `CI${suffix.slice(0, 2)}` } });
 const election = await prisma.election.create({ data: { name: `CI Test Election ${suffix}`, electionType: 'ASSEMBLY', year: 2099 } });
 const constituency = await prisma.constituency.create({ data: { stateId: state.id, name: `CI Test Constituency ${suffix}` } });
@@ -26,9 +27,7 @@ const candidate = await prisma.candidate.create({ data: { name: `CI Test Candida
 
 try {
   const loginResponse = await fetch(`${baseUrl}/api/v1/admin/login`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ email, password })
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password })
   });
   const cookie = cookieFrom(loginResponse);
   await json(await fetch(`${baseUrl}/api/v1/admin/me`, { headers: { cookie } }));
@@ -57,8 +56,7 @@ try {
   if (published.status !== 'PUBLISHED') throw new Error(`Publish failed: ${JSON.stringify(published)}`);
 
   const publicElections = await json<{ data: Array<{ id: string; sourceStatus: string }> }>(await fetch(`${baseUrl}/api/v1/elections`));
-  const visible = publicElections.data.some(item => item.id === election.id && item.sourceStatus === 'PUBLISHED');
-  if (!visible) throw new Error('Published election was not visible through the public API');
+  if (!publicElections.data.some(item => item.id === election.id && item.sourceStatus === 'PUBLISHED')) throw new Error('Published election was not visible through the public API');
 
   const result = await prisma.candidateResult.findFirst({ where: { electionId: election.id, candidateId: candidate.id } });
   if (!result || result.votes !== 12345 || !result.isWinner) throw new Error('Published CandidateResult was not persisted correctly');
