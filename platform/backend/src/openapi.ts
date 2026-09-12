@@ -1,10 +1,12 @@
 export const openapi = {
-  openapi: '3.0.3', info: { title: 'Indian Election Data API', version: '1.0.0', description: 'Public election results, constituency history, candidate analytics, party performance, election dashboards, historical trends and advanced public search.' },
+  openapi: '3.0.3', info: { title: 'Indian Election Data API', version: '1.0.0', description: 'Public election results, constituency history, candidate analytics, party performance, election dashboards, historical trends, geographic maps and advanced public search.' },
   servers: [{ url: '/api/v1' }],
   paths: {
     '/elections': { get: { summary: 'List published elections', parameters: pageParams(), responses: { '200': jsonResponse() } } },
     '/elections/trends': { get: { summary: 'Historical election trends', responses: { '200': jsonResponse() } } },
     '/elections/compare': { get: { summary: 'Compare two published elections', parameters: [{ name: 'fromId', in: 'query', required: true, schema: { type: 'string' } }, { name: 'toId', in: 'query', required: true, schema: { type: 'string' } }], responses: { '200': jsonResponse(), '400': jsonResponse(), '404': jsonResponse() } } },
+    '/elections/map': { get: { summary: 'Geographic election overview by state', parameters: [{ name: 'electionId', in: 'query', schema: { type: 'string' } }], responses: { '200': jsonResponse(), '404': jsonResponse() } } },
+    '/elections/map/states/{stateId}': { get: { summary: 'State geographic drill-down and constituency winners', parameters: [idParam('stateId'), { name: 'electionId', in: 'query', schema: { type: 'string' } }], responses: { '200': jsonResponse(), '404': jsonResponse() } } },
     '/elections/{id}': { get: { summary: 'Election summary', parameters: [idParam()], responses: { '200': jsonResponse(), '404': jsonResponse() } } },
     '/elections/{id}/dashboard': { get: { summary: 'Election dashboard analytics', parameters: [idParam()], responses: { '200': jsonResponse(), '404': jsonResponse() } } },
     '/elections/{id}/results': { get: { summary: 'Election-wise candidate results', parameters: [idParam(), ...pageParams(), { name: 'constituencyVersionId', in: 'query', schema: { type: 'string' } }, { name: 'partyId', in: 'query', schema: { type: 'string' } }], responses: { '200': jsonResponse() } } },
