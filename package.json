@@ -9,10 +9,10 @@
     "prisma:generate": "prisma generate --schema platform/prisma/schema.prisma",
     "prisma:validate": "prisma validate --schema platform/prisma/schema.prisma",
     "prisma:migrate": "prisma migrate dev --schema platform/prisma/schema.prisma",
-    "db:seed": "tsx platform/prisma/seed.ts",
-    "db:reset": "prisma migrate reset --schema platform/prisma/schema.prisma"
+    "admin:provision": "tsx platform/backend/src/provision-admin.ts"
   },
   "devDependencies": {
-    "prisma": "^6.16.2"
+    "prisma": "^6.16.2",
+    "tsx": "^4.19.2"
   }
 }
