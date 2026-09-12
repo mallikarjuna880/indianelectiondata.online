@@ -1,5 +1,5 @@
 export const openapi = {
-  openapi: '3.0.3', info: { title: 'Indian Election Data API', version: '1.0.0', description: 'Public election results, constituency history, candidate analytics, party performance, election dashboards and search.' },
+  openapi: '3.0.3', info: { title: 'Indian Election Data API', version: '1.0.0', description: 'Public election results, constituency history, candidate analytics, party performance, election dashboards and advanced public search.' },
   servers: [{ url: '/api/v1' }],
   paths: {
     '/elections': { get: { summary: 'List published elections', parameters: pageParams(), responses: { '200': jsonResponse() } } },
@@ -13,7 +13,8 @@ export const openapi = {
     '/constituencies/{id}/results': { get: { summary: 'Constituency results by election', parameters: [idParam(), { name: 'electionId', in: 'query', schema: { type: 'string' } }], responses: { '200': jsonResponse() } } },
     '/constituencies/{id}/history': { get: { summary: 'Historical winner, runner-up, margin, turnout and NOTA', parameters: [idParam()], responses: { '200': jsonResponse() } } },
     '/parties/{id}/performance': { get: { summary: 'Party performance across elections', parameters: [idParam(), ...pageParams(), { name: 'year', in: 'query', schema: { type: 'integer' } }, { name: 'electionType', in: 'query', schema: { type: 'string' } }], responses: { '200': jsonResponse() } } },
-    '/search': { get: { summary: 'Search states, constituencies, candidates and parties', parameters: [{ name: 'q', in: 'query', required: true, schema: { type: 'string', minLength: 2 } }, ...pageParams()], responses: { '200': jsonResponse() } } }
+    '/search': { get: { summary: 'Search states, constituencies, candidates and parties', parameters: [{ name: 'q', in: 'query', required: true, schema: { type: 'string', minLength: 2 } }, ...pageParams()], responses: { '200': jsonResponse() } } },
+    '/search/advanced': { get: { summary: 'Advanced search across published election data', parameters: [{ name: 'q', in: 'query', required: true, schema: { type: 'string', minLength: 2 } }, ...pageParams(), { name: 'type', in: 'query', schema: { type: 'string', enum: ['candidate','party','constituency','state'] } }, { name: 'year', in: 'query', schema: { type: 'integer' } }, { name: 'electionType', in: 'query', schema: { type: 'string' } }, { name: 'stateId', in: 'query', schema: { type: 'string' } }, { name: 'partyId', in: 'query', schema: { type: 'string' } }], responses: { '200': jsonResponse() } } }
   }
 };
 function idParam(name = 'id') { return { name, in: 'path', required: true, schema: { type: 'string' } }; }
