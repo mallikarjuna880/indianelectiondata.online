@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Browse Indian election states and constituencies.">
+  <title>States & Constituencies — Indian Election Data</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar"><div class="container nav">
+  <a class="brand" href="index.html"><span class="brand-mark">IED</span><span>Indian Election Data</span></a>
+  <nav><a href="index.html#results">Results</a><a href="states.html">States</a><a href="index.html#parties">Parties</a></nav>
+</div></header>
+<main>
+<section class="hero compact-hero"><div class="container">
+  <span class="eyebrow">STATE & CONSTITUENCY DIRECTORY</span><h1>Explore <span>India</span> by state.</h1>
+  <p>Choose a state to browse its constituencies and published election results.</p>
+</div></section>
+<section class="container section">
+  <div class="section-head"><div><span class="eyebrow">STATES</span><h2>All states and territories</h2></div><div class="controls"><input id="stateSearch" type="search" placeholder="Search a state…" aria-label="Search states"></div></div>
+  <div id="stateDirectory" class="state-grid"></div><div id="statePagination" class="pagination"></div>
+</section>
+<section id="constituenciesSection" class="container section hidden">
+  <div class="section-head"><div><span class="eyebrow">CONSTITUENCIES</span><h2 id="selectedStateTitle">Constituencies</h2></div><div class="controls"><input id="constituencySearch" type="search" placeholder="Search constituency…" aria-label="Search constituencies"></div></div>
+  <div id="constituencyDirectory" class="directory-grid"></div><div id="constituencyPagination" class="pagination"></div>
+</section>
+</main>
+<footer><div class="container footer"><div><strong>Indian Election Data</strong><p>Public election-data explorer.</p></div><div><span><a href="index.html">← Back home</a></span></div></div></footer>
+<script src="states.js"></script>
+</body>
+</html>
