@@ -1,0 +1,85 @@
+name: Phase 3 E2E
+
+on:
+  push:
+    branches: [phase-3-admin-import]
+  pull_request:
+    branches: [main]
+
+jobs:
+  phase3-e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: election_user
+          POSTGRES_PASSWORD: test-password
+          POSTGRES_DB: election_data
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U election_user -d election_data"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://election_user:test-password@localhost:5432/election_data
+      COOKIE_SECRET: ci-only-secret-change-me
+      ADMIN_EMAIL: admin@ci.example
+      ADMIN_PASSWORD: CI-Admin-Password-123!
+      ADMIN_ROLE: SUPER_ADMIN
+      PORT: 4000
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: platform
+        run: npm install
+
+      - name: Generate Prisma client
+        working-directory: platform
+        run: npm run prisma:generate
+
+      - name: Validate Prisma schema
+        working-directory: platform
+        run: npm run prisma:validate
+
+      - name: Run Prisma migrations
+        working-directory: platform
+        run: npx prisma migrate deploy
+
+      - name: Provision admin
+        working-directory: platform
+        run: npx tsx backend/src/provision-admin.ts
+
+      - name: Typecheck and build
+        working-directory: platform/backend
+        run: npm run typecheck && npm run build
+
+      - name: Start API
+        working-directory: platform/backend
+        run: npm start > /tmp/ied-api.log 2>&1 &
+
+      - name: Wait for API
+        run: |
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4000/health && exit 0
+            sleep 1
+          done
+          cat /tmp/ied-api.log
+          exit 1
+
+      - name: Full Phase 3 smoke test
+        working-directory: platform
+        run: npx tsx backend/src/phase3-smoke.ts
+
+      - name: API logs on failure
+        if: failure()
+        run: cat /tmp/ied-api.log
