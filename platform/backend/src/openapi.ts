@@ -1,8 +1,10 @@
 export const openapi = {
-  openapi: '3.0.3', info: { title: 'Indian Election Data API', version: '1.0.0', description: 'Public election results, constituency history, candidate analytics, party performance, election dashboards and advanced public search.' },
+  openapi: '3.0.3', info: { title: 'Indian Election Data API', version: '1.0.0', description: 'Public election results, constituency history, candidate analytics, party performance, election dashboards, historical trends and advanced public search.' },
   servers: [{ url: '/api/v1' }],
   paths: {
     '/elections': { get: { summary: 'List published elections', parameters: pageParams(), responses: { '200': jsonResponse() } } },
+    '/elections/trends': { get: { summary: 'Historical election trends', responses: { '200': jsonResponse() } } },
+    '/elections/compare': { get: { summary: 'Compare two published elections', parameters: [{ name: 'fromId', in: 'query', required: true, schema: { type: 'string' } }, { name: 'toId', in: 'query', required: true, schema: { type: 'string' } }], responses: { '200': jsonResponse(), '400': jsonResponse(), '404': jsonResponse() } } },
     '/elections/{id}': { get: { summary: 'Election summary', parameters: [idParam()], responses: { '200': jsonResponse(), '404': jsonResponse() } } },
     '/elections/{id}/dashboard': { get: { summary: 'Election dashboard analytics', parameters: [idParam()], responses: { '200': jsonResponse(), '404': jsonResponse() } } },
     '/elections/{id}/results': { get: { summary: 'Election-wise candidate results', parameters: [idParam(), ...pageParams(), { name: 'constituencyVersionId', in: 'query', schema: { type: 'string' } }, { name: 'partyId', in: 'query', schema: { type: 'string' } }], responses: { '200': jsonResponse() } } },
@@ -14,7 +16,7 @@ export const openapi = {
     '/constituencies/{id}/history': { get: { summary: 'Historical winner, runner-up, margin, turnout and NOTA', parameters: [idParam()], responses: { '200': jsonResponse() } } },
     '/parties/{id}/performance': { get: { summary: 'Party performance across elections', parameters: [idParam(), ...pageParams(), { name: 'year', in: 'query', schema: { type: 'integer' } }, { name: 'electionType', in: 'query', schema: { type: 'string' } }], responses: { '200': jsonResponse() } } },
     '/search': { get: { summary: 'Search states, constituencies, candidates and parties', parameters: [{ name: 'q', in: 'query', required: true, schema: { type: 'string', minLength: 2 } }, ...pageParams()], responses: { '200': jsonResponse() } } },
-    '/search/advanced': { get: { summary: 'Advanced search across published election data', parameters: [{ name: 'q', in: 'query', required: true, schema: { type: 'string', minLength: 2 } }, ...pageParams(), { name: 'type', in: 'query', schema: { type: 'string', enum: ['candidate','party','constituency','state'] } }, { name: 'year', in: 'query', schema: { type: 'integer' } }, { name: 'electionType', in: 'query', schema: { type: 'string' } }, { name: 'stateId', in: 'query', schema: { type: 'string' } }, { name: 'partyId', in: 'query', schema: { type: 'string' } }], responses: { '200': jsonResponse() } } }
+    '/search/advanced': { get: { summary: 'Advanced search across published election data', parameters: [{ name: 'q', in: 'query', required: true, schema: { type: 'string', minLength: 2 } }, ...pageParams(), { name: 'type', in: 'query', schema: { type: 'string' } }, { name: 'year', in: 'query', schema: { type: 'integer' } }, { name: 'electionType', in: 'query', schema: { type: 'string' } }, { name: 'stateId', in: 'query', schema: { type: 'string' } }, { name: 'partyId', in: 'query', schema: { type: 'string' } }], responses: { '200': jsonResponse() } } }
   }
 };
 function idParam(name = 'id') { return { name, in: 'path', required: true, schema: { type: 'string' } }; }
