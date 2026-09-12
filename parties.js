@@ -1,0 +1,9 @@
+const API_BASE=window.IED_API_BASE||'/api/v1';
+const directory=document.getElementById('partyDirectory'), search=document.getElementById('partySearch'), pagination=document.getElementById('partyPagination');
+let page=1; const pageSize=24;
+function esc(v){return String(v??'').replace(/[&<>\'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function fmt(v){return new Intl.NumberFormat('en-IN').format(Number(v||0));}
+async function api(path){const r=await fetch(API_BASE+path,{headers:{Accept:'application/json'}});if(!r.ok)throw Error('API '+r.status);return r.json();}
+function pager(meta){if(!meta||meta.totalPages<=1){pagination.innerHTML='';return;}pagination.innerHTML=`<button ${meta.page<=1?'disabled':''} data-p="${meta.page-1}">Previous</button><span>Page ${meta.page} of ${meta.totalPages}</span><button ${meta.page>=meta.totalPages?'disabled':''} data-p="${meta.page+1}">Next</button>`;pagination.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>load(Number(b.dataset.p))));}
+async function load(p=1){page=p;try{const q=search.value.trim();const payload=await api(`/parties?page=${p}&pageSize=${pageSize}${q?'&q='+encodeURIComponent(q):''}`);const rows=payload.data||[];directory.innerHTML=rows.length?rows.map(x=>`<a class="party-card directory-party-card" href="party.html?id=${encodeURIComponent(x.id)}"><div class="top"><div><h3>${esc(x.name)}</h3><p>${esc(x.abbreviation||'')}</p></div><span class="party-pill">View</span></div><div class="party-card-arrow">→</div></a>`).join(''):'<div class="empty">No parties found.</div>';pager(payload.pagination);}catch(e){directory.innerHTML='<div class="status-card error">The election API is unavailable. Please try again later.</div>';pagination.innerHTML='';}}
+search.addEventListener('input',()=>load(1));load();
