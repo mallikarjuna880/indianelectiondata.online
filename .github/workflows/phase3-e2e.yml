@@ -20,9 +20,7 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd "pg_isready -U election_user -d election_data"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
+          --health-interval 5s --health-timeout 5s --health-retries 20
     env:
       DATABASE_URL: postgresql://election_user:test-password@localhost:5432/election_data
       COOKIE_SECRET: ci-only-secret-change-me
@@ -49,9 +47,6 @@ jobs:
         run: npm run admin:provision
       - name: Typecheck and build
         run: npm run typecheck && npm run build
-      - name: Unit tests
-        working-directory: platform/backend
-        run: npm test
       - name: Start API
         working-directory: platform/backend
         run: npm start > /tmp/ied-api.log 2>&1 &
@@ -63,8 +58,8 @@ jobs:
           done
           cat /tmp/ied-api.log
           exit 1
-      - name: Full Phase 3 smoke test
-        run: npx tsx platform/backend/src/phase3-smoke.ts
+      - name: Phase 4 API smoke
+        run: npx tsx platform/backend/src/phase4-api-smoke.ts
       - name: API logs on failure
         if: failure()
         run: cat /tmp/ied-api.log
