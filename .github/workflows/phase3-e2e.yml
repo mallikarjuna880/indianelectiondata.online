@@ -1,13 +1,13 @@
-name: Phase 3 E2E
+name: Phase 4 Election API
 
 on:
   push:
-    branches: [phase-3-admin-import]
+    branches: [phase-3-admin-import, phase-4-election-api]
   pull_request:
     branches: [main]
 
 jobs:
-  phase3-e2e:
+  phase4-api:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -23,7 +23,6 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 20
-
     env:
       DATABASE_URL: postgresql://election_user:test-password@localhost:5432/election_data
       COOKIE_SECRET: ci-only-secret-change-me
@@ -32,36 +31,30 @@ jobs:
       ADMIN_ROLE: SUPER_ADMIN
       PORT: 4000
       NODE_ENV: test
-
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-
       - name: Install dependencies
         run: npm install
-
       - name: Generate Prisma client
         run: npm run prisma:generate
-
       - name: Validate Prisma schema
         run: npm run prisma:validate
-
       - name: Run Prisma migrations
         run: npx prisma migrate deploy --schema platform/prisma/schema.prisma
-
       - name: Provision admin
         run: npm run admin:provision
-
       - name: Typecheck and build
         run: npm run typecheck && npm run build
-
+      - name: Unit tests
+        working-directory: platform/backend
+        run: npm test
       - name: Start API
         working-directory: platform/backend
         run: npm start > /tmp/ied-api.log 2>&1 &
-
       - name: Wait for API
         run: |
           for i in {1..30}; do
@@ -70,10 +63,8 @@ jobs:
           done
           cat /tmp/ied-api.log
           exit 1
-
       - name: Full Phase 3 smoke test
         run: npx tsx platform/backend/src/phase3-smoke.ts
-
       - name: API logs on failure
         if: failure()
         run: cat /tmp/ied-api.log
