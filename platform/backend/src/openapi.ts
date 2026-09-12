@@ -1,11 +1,12 @@
 export const openapi = {
-  openapi: '3.0.3', info: { title: 'Indian Election Data API', version: '1.0.0', description: 'Public election results, constituency history, party performance, election dashboards and search.' },
+  openapi: '3.0.3', info: { title: 'Indian Election Data API', version: '1.0.0', description: 'Public election results, constituency history, candidate analytics, party performance, election dashboards and search.' },
   servers: [{ url: '/api/v1' }],
   paths: {
     '/elections': { get: { summary: 'List published elections', parameters: pageParams(), responses: { '200': jsonResponse() } } },
     '/elections/{id}': { get: { summary: 'Election summary', parameters: [idParam()], responses: { '200': jsonResponse(), '404': jsonResponse() } } },
     '/elections/{id}/dashboard': { get: { summary: 'Election dashboard analytics', parameters: [idParam()], responses: { '200': jsonResponse(), '404': jsonResponse() } } },
     '/elections/{id}/results': { get: { summary: 'Election-wise candidate results', parameters: [idParam(), ...pageParams(), { name: 'constituencyVersionId', in: 'query', schema: { type: 'string' } }, { name: 'partyId', in: 'query', schema: { type: 'string' } }], responses: { '200': jsonResponse() } } },
+    '/candidates/{id}': { get: { summary: 'Candidate profile and published election history', parameters: [idParam(), ...pageParams(), { name: 'year', in: 'query', schema: { type: 'integer' } }, { name: 'electionType', in: 'query', schema: { type: 'string' } }], responses: { '200': jsonResponse(), '404': jsonResponse() } } },
     '/states': { get: { summary: 'List states', parameters: [...pageParams(), { name: 'q', in: 'query', schema: { type: 'string' } }], responses: { '200': jsonResponse() } } },
     '/states/{stateId}/constituencies': { get: { summary: 'List constituencies in a state', parameters: [idParam('stateId'), ...pageParams(), { name: 'q', in: 'query', schema: { type: 'string' } }], responses: { '200': jsonResponse() } } },
     '/constituencies/{id}': { get: { summary: 'Constituency detail and election versions', parameters: [idParam()], responses: { '200': jsonResponse(), '404': jsonResponse() } } },
