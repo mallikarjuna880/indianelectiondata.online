@@ -5,6 +5,7 @@ import rateLimit from '@fastify/rate-limit';
 import { prisma } from './db.js';
 import { login, logout, requireAdmin } from './admin-auth.js';
 import { parseElectionFile, validateRecord, normalizeRecord } from './importer.js';
+import { registerPublicApi } from './public-api.js';
 
 const app = Fastify({ logger: true, bodyLimit: 1024 * 1024 });
 await app.register(cookie, { secret: process.env.COOKIE_SECRET || 'change-me-in-production' });
@@ -121,7 +122,8 @@ app.post('/api/v1/admin/imports/:id/publish', async (request, reply) => {
   return { id, status: 'PUBLISHED', electionId: body.electionId };
 });
 
-app.get('/api/v1/elections', async () => ({ data: await prisma.election.findMany({ where: { sourceStatus: 'PUBLISHED' }, orderBy: [{ year: 'desc' }, { name: 'asc' }] }) }));
+await registerPublicApi(app);
+
 app.get('/api/v1/search', async (request) => { const { q = '' } = request.query as { q?: string }; return { query: q, data: [] }; });
 app.get('/api/v1/constituencies/:id/history', async (request) => { const { id } = request.params as { id: string }; return { constituencyId: id, elections: [] }; });
 app.addHook('onClose', async () => { await prisma.$disconnect(); });
