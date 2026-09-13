@@ -1,7 +1,7 @@
 import { parse } from 'csv-parse/sync';
 import * as XLSX from 'xlsx';
 
-export type ImportRecord = Record<string, string | number | boolean | null>;
+export type ImportRecord = Record<string, unknown>;
 
 const MAX_FILE_BYTES = Number(process.env.MAX_IMPORT_BYTES || 10 * 1024 * 1024);
 const REQUIRED = ['electionId', 'constituencyVersionId', 'candidateId', 'votes', 'position', 'isWinner'];
@@ -38,8 +38,8 @@ export function validateRecord(row: ImportRecord) {
   if (!integer(row.position) || Number(row.position) < 1) errors.push('position must be a positive integer');
   if (!bool(row.isWinner)) errors.push('isWinner must be true/false, 1/0 or yes/no');
   if (text(row.voteShare) && (!decimal(row.voteShare) || Number(row.voteShare) < 0 || Number(row.voteShare) > 100)) errors.push('voteShare must be between 0 and 100');
-  if (text(row.electionId) && text(row.electionId) !== text(row._electionId)) {
-    // _electionId is optional and, when supplied by an import template, must agree with electionId.
+  if (text(row.electionId) && text(row._electionId) && text(row.electionId) !== text(row._electionId)) {
+    errors.push('electionId does not match _electionId');
   }
   return errors;
 }
