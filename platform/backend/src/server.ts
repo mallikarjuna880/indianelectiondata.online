@@ -67,7 +67,7 @@ app.post('/api/v1/admin/imports/:id/validate', async (request, reply) => {
     for (const row of rows) {
       const payload = row.payload as Record<string, unknown>; const rowErrors = validateRecord(payload);
       if (rowErrors.length) { errors++; await tx.importRow.update({ where: { id: row.id }, data: { status: 'ERROR', errors: rowErrors } }); }
-      else { valid++; await tx.importRow.update({ where: { id: row.id }, data: { status: 'VALID', errors: null, normalized: normalizeRecord(payload) } }); }
+      else { valid++; await tx.importRow.update({ where: { id: row.id }, data: { status: 'VALID', errors: [], normalized: normalizeRecord(payload) } }); }
     }
     await tx.importBatch.update({ where: { id }, data: { status: valid === rows.length ? 'VALIDATED' : 'REJECTED', validRows: valid, errorRows: errors, validatedAt: new Date() } });
   });
