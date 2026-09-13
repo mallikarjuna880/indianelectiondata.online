@@ -57,6 +57,9 @@ jobs:
       - name: Typecheck and build
         run: npm run typecheck && npm run build
 
+      - name: Run analytics regression tests
+        run: npx tsx --test platform/backend/src/analytics.test.ts
+
       - name: Start API
         working-directory: platform/backend
         run: npm start > /tmp/ied-api.log 2>&1 &
