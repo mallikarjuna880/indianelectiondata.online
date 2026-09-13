@@ -7,10 +7,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum ElectionType { LOK_SABHA ASSEMBLY OTHER }
-enum SourceStatus { DRAFT REVIEWED PUBLISHED }
-enum UserRole { SUPER_ADMIN ADMIN DATA_EDITOR }
-enum ImportStatus { UPLOADED VALIDATED IN_REVIEW APPROVED PUBLISHED REJECTED }
+enum ElectionType {
+  LOK_SABHA
+  ASSEMBLY
+  OTHER
+}
+
+enum SourceStatus {
+  DRAFT
+  REVIEWED
+  PUBLISHED
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  DATA_EDITOR
+}
+
+enum ImportStatus {
+  UPLOADED
+  VALIDATED
+  IN_REVIEW
+  APPROVED
+  PUBLISHED
+  REJECTED
+}
 
 model Election {
   id          String       @id @default(uuid()) @db.Uuid
