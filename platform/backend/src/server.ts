@@ -6,6 +6,7 @@ import { prisma } from './db.js';
 import { login, logout, requireAdmin } from './admin-auth.js';
 import { parseElectionFile, validateRecord, normalizeRecord } from './importer.js';
 import { registerPublicApi } from './public-api.js';
+import { registerAnalyticsApi } from './analytics/analytics-api.js';
 
 const app = Fastify({ logger: true, bodyLimit: 1024 * 1024 });
 await app.register(cookie, { secret: process.env.COOKIE_SECRET || 'change-me-in-production' });
@@ -123,6 +124,7 @@ app.post('/api/v1/admin/imports/:id/publish', async (request, reply) => {
 });
 
 await registerPublicApi(app);
+await registerAnalyticsApi(app);
 
 app.get('/api/v1/search', async (request) => { const { q = '' } = request.query as { q?: string }; return { query: q, data: [] }; });
 app.get('/api/v1/constituencies/:id/history', async (request) => { const { id } = request.params as { id: string }; return { constituencyId: id, elections: [] }; });
