@@ -8,168 +8,375 @@ datasource db {
 }
 
 enum ElectionType { LOK_SABHA ASSEMBLY OTHER }
-enum SourceStatus { DRAFT REVIEWED PUBLISHED }
+enum ElectionScope { GENERAL BY_ELECTION OTHER }
+enum PublicationStatus { DRAFT REVIEWED APPROVED PUBLISHED ARCHIVED }
+enum ImportStatus { UPLOADED PARSING VALIDATING VALID INVALID REVIEW APPROVED REJECTED PUBLISHED }
+enum ValidationSeverity { INFO WARNING ERROR }
+enum DuplicateStatus { OPEN ACCEPTED REJECTED MERGED }
 enum UserRole { SUPER_ADMIN ADMIN DATA_EDITOR }
+enum SourceType { ECI CEO GOVERNMENT DOCUMENT DATASET OTHER }
+enum JurisdictionType { LOK_SABHA ASSEMBLY OTHER }
 
 model Election {
-  id          String       @id @default(uuid()) @db.Uuid
-  name        String
-  electionType ElectionType
-  year        Int
-  electionDate DateTime?
-  description String?
-  sourceStatus SourceStatus @default(DRAFT)
-  results     CandidateResult[]
-  statistics  ConstituencyStatistic[]
-  versions    ConstituencyVersion[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String            @id @default(uuid()) @db.Uuid
+  name           String
+  electionType   ElectionType
+  electionScope  ElectionScope     @default(GENERAL)
+  year           Int
+  electionNumber Int?
+  electionDate   DateTime?
+  description    String?
+  status         PublicationStatus @default(DRAFT)
+  results        CandidateResult[]
+  statistics     ConstituencyStatistic[]
+  versions       ConstituencyVersion[]
+  importBatches  ImportBatch[]
+  publications   PublicationVersion[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
   @@index([electionType, year])
+  @@unique([electionType, year, electionNumber])
 }
 
 model State {
-  id             String @id @default(uuid()) @db.Uuid
+  id             String          @id @default(uuid()) @db.Uuid
   name           String
   abbreviation   String?
   stateCode      String?
+  stateType      String?
+  validFrom      DateTime?
+  validTo        DateTime?
   constituencies Constituency[]
-  createdAt      DateTime @default(now())
+  aliases        StateAlias[]
+  createdAt      DateTime        @default(now())
   @@unique([name])
+  @@index([stateCode])
+}
+
+model StateAlias {
+  id String @id @default(uuid()) @db.Uuid
+  stateId String @db.Uuid
+  alias String
+  state State @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  @@unique([stateId, alias])
+  @@index([alias])
 }
 
 model Constituency {
-  id          String @id @default(uuid()) @db.Uuid
-  stateId     String @db.Uuid
-  name        String
-  state       State @relation(fields: [stateId], references: [id])
-  versions    ConstituencyVersion[]
-  latitude    Decimal? @db.Decimal(10,7)
-  longitude   Decimal? @db.Decimal(10,7)
-  createdAt   DateTime @default(now())
-  @@index([stateId, name])
+  id String @id @default(uuid()) @db.Uuid
+  stateId String @db.Uuid
+  name String
+  jurisdiction JurisdictionType
+  officialCode String?
+  latitude Decimal? @db.Decimal(10,7)
+  longitude Decimal? @db.Decimal(10,7)
+  state State @relation(fields: [stateId], references: [id])
+  versions ConstituencyVersion[]
+  createdAt DateTime @default(now())
+  @@unique([stateId, name, jurisdiction])
+  @@index([stateId, jurisdiction])
+  @@index([officialCode])
 }
 
 model ConstituencyVersion {
-  id                  String @id @default(uuid()) @db.Uuid
-  constituencyId      String @db.Uuid
-  electionId          String @db.Uuid
-  name                String
-  constituencyNumber  Int?
-  reservedCategory    String?
+  id String @id @default(uuid()) @db.Uuid
+  constituencyId String @db.Uuid
+  electionId String @db.Uuid
+  name String
+  constituencyNumber Int?
+  reservedCategory String?
   delimitationVersion String?
-  constituency        Constituency @relation(fields: [constituencyId], references: [id])
-  election            Election @relation(fields: [electionId], references: [id])
-  results             CandidateResult[]
-  statistics          ConstituencyStatistic[]
+  delimitationOrder String?
+  validFrom DateTime?
+  validTo DateTime?
+  constituency Constituency @relation(fields: [constituencyId], references: [id])
+  election Election @relation(fields: [electionId], references: [id])
+  results CandidateResult[]
+  statistics ConstituencyStatistic[]
   @@unique([constituencyId, electionId])
   @@index([electionId, name])
+  @@index([delimitationVersion])
 }
 
 model Party {
-  id            String @id @default(uuid()) @db.Uuid
-  name          String
-  abbreviation  String?
-  symbolUrl     String?
-  foundedYear   Int?
+  id String @id @default(uuid()) @db.Uuid
+  name String
+  abbreviation String?
+  symbolUrl String?
+  foundedYear Int?
   dissolvedYear Int?
-  results       CandidateResult[]
+  results CandidateResult[]
+  aliases PartyAlias[]
+  externalIds PartyExternalId[]
+  history PartyHistory[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   @@index([name])
+  @@index([abbreviation])
+}
+
+model PartyAlias {
+  id String @id @default(uuid()) @db.Uuid
+  partyId String @db.Uuid
+  alias String
+  party Party @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  @@unique([partyId, alias])
+  @@index([alias])
+}
+
+model PartyExternalId {
+  id String @id @default(uuid()) @db.Uuid
+  partyId String @db.Uuid
+  sourceName String
+  externalId String
+  party Party @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  @@unique([sourceName, externalId])
+}
+
+model PartyHistory {
+  id String @id @default(uuid()) @db.Uuid
+  partyId String @db.Uuid
+  name String?
+  abbreviation String?
+  symbolUrl String?
+  validFrom DateTime?
+  validTo DateTime?
+  notes String?
+  party Party @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  @@index([partyId, validFrom])
 }
 
 model Candidate {
-  id          String @id @default(uuid()) @db.Uuid
-  name        String
-  gender      String?
+  id String @id @default(uuid()) @db.Uuid
+  name String
+  normalizedName String
+  gender String?
   dateOfBirth DateTime?
-  biography   String?
-  photoUrl    String?
-  results     CandidateResult[]
+  biography String?
+  photoUrl String?
+  results CandidateResult[]
+  aliases CandidateAlias[]
+  externalIds CandidateExternalId[]
+  duplicateMatches DuplicateCandidate[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   @@index([name])
+  @@index([normalizedName])
+}
+
+model CandidateAlias {
+  id String @id @default(uuid()) @db.Uuid
+  candidateId String @db.Uuid
+  alias String
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  @@unique([candidateId, alias])
+  @@index([alias])
+}
+
+model CandidateExternalId {
+  id String @id @default(uuid()) @db.Uuid
+  candidateId String @db.Uuid
+  sourceName String
+  externalId String
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  @@unique([sourceName, externalId])
 }
 
 model CandidateResult {
-  id                     String @id @default(uuid()) @db.Uuid
-  electionId             String @db.Uuid
-  constituencyVersionId  String @db.Uuid
-  candidateId            String @db.Uuid
-  partyId                String? @db.Uuid
-  votes                  Int
-  voteShare              Decimal? @db.Decimal(8,4)
-  position               Int
-  isWinner               Boolean @default(false)
-  election               Election @relation(fields: [electionId], references: [id])
-  constituencyVersion   ConstituencyVersion @relation(fields: [constituencyVersionId], references: [id])
-  candidate              Candidate @relation(fields: [candidateId], references: [id])
-  party                  Party? @relation(fields: [partyId], references: [id])
-  sources                ResultSource[]
+  id String @id @default(uuid()) @db.Uuid
+  electionId String @db.Uuid
+  constituencyVersionId String @db.Uuid
+  candidateId String @db.Uuid
+  partyId String? @db.Uuid
+  votes Int
+  voteShare Decimal? @db.Decimal(8,4)
+  position Int
+  isWinner Boolean @default(false)
+  election Election @relation(fields: [electionId], references: [id])
+  constituencyVersion ConstituencyVersion @relation(fields: [constituencyVersionId], references: [id])
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+  party Party? @relation(fields: [partyId], references: [id])
+  sources ResultSource[]
+  duplicateMatches DuplicateResult[]
   @@unique([electionId, constituencyVersionId, candidateId])
   @@index([electionId, partyId])
+  @@index([constituencyVersionId, position])
+  @@index([candidateId])
 }
 
 model ConstituencyStatistic {
-  id                    String @id @default(uuid()) @db.Uuid
-  electionId            String @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
+  electionId String @db.Uuid
   constituencyVersionId String @db.Uuid
-  electors              Int?
-  votesPolled           Int?
-  validVotes            Int?
-  notaVotes             Int?
-  turnoutPercentage     Decimal? @db.Decimal(8,4)
-  election              Election @relation(fields: [electionId], references: [id])
-  constituencyVersion   ConstituencyVersion @relation(fields: [constituencyVersionId], references: [id])
+  electors Int?
+  votesPolled Int?
+  validVotes Int?
+  notaVotes Int?
+  rejectedVotes Int?
+  postalVotes Int?
+  ePostalVotes Int?
+  turnoutPercentage Decimal? @db.Decimal(8,4)
+  election Election @relation(fields: [electionId], references: [id])
+  constituencyVersion ConstituencyVersion @relation(fields: [constituencyVersionId], references: [id])
   @@unique([electionId, constituencyVersionId])
 }
 
 model DataSource {
-  id              String @id @default(uuid()) @db.Uuid
-  name            String
-  organization    String?
-  url             String?
+  id String @id @default(uuid()) @db.Uuid
+  name String
+  organization String?
+  url String?
+  documentUrl String?
   publicationDate DateTime?
-  retrievedAt     DateTime @default(now())
-  sourceType      String?
-  results         ResultSource[]
+  retrievedAt DateTime @default(now())
+  sourceType SourceType @default(OTHER)
+  checksum String?
+  notes String?
+  results ResultSource[]
+  importBatches ImportBatch[]
+  documents SourceDocument[]
+  @@index([organization])
+  @@index([sourceType])
+}
+
+model SourceDocument {
+  id String @id @default(uuid()) @db.Uuid
+  sourceId String @db.Uuid
+  title String
+  documentUrl String?
+  checksum String?
+  retrievedAt DateTime @default(now())
+  source DataSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  @@index([sourceId])
 }
 
 model ResultSource {
   resultId String @db.Uuid
   sourceId String @db.Uuid
-  result   CandidateResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
-  source   DataSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  result CandidateResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  source DataSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
   @@id([resultId, sourceId])
 }
 
+model ImportBatch {
+  id String @id @default(uuid()) @db.Uuid
+  filename String
+  fileHash String
+  electionId String? @db.Uuid
+  sourceId String? @db.Uuid
+  status ImportStatus @default(UPLOADED)
+  uploadedById String? @db.Uuid
+  uploadedAt DateTime @default(now())
+  completedAt DateTime?
+  notes String?
+  election Election? @relation(fields: [electionId], references: [id])
+  source DataSource? @relation(fields: [sourceId], references: [id])
+  uploadedBy User? @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  rows ImportRow[]
+  @@unique([fileHash])
+  @@index([electionId, status])
+}
+
+model ImportRow {
+  id String @id @default(uuid()) @db.Uuid
+  batchId String @db.Uuid
+  rowNumber Int
+  rawData Json
+  normalizedData Json?
+  status ImportStatus @default(UPLOADED)
+  errorCount Int @default(0)
+  batch ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  validationErrors ValidationError[]
+  duplicateCandidates DuplicateCandidate[]
+  duplicateResults DuplicateResult[]
+  @@unique([batchId, rowNumber])
+  @@index([batchId, status])
+}
+
+model ValidationError {
+  id String @id @default(uuid()) @db.Uuid
+  importRowId String @db.Uuid
+  ruleCode String
+  severity ValidationSeverity @default(ERROR)
+  field String?
+  message String
+  details Json?
+  importRow ImportRow @relation(fields: [importRowId], references: [id], onDelete: Cascade)
+  @@index([importRowId, severity])
+}
+
+model DuplicateCandidate {
+  id String @id @default(uuid()) @db.Uuid
+  importRowId String @db.Uuid
+  existingCandidateId String? @db.Uuid
+  confidence Decimal? @db.Decimal(6,5)
+  reason String
+  status DuplicateStatus @default(OPEN)
+  importRow ImportRow @relation(fields: [importRowId], references: [id], onDelete: Cascade)
+  existingCandidate Candidate? @relation(fields: [existingCandidateId], references: [id], onDelete: SetNull)
+  @@index([status])
+}
+
+model DuplicateResult {
+  id String @id @default(uuid()) @db.Uuid
+  importRowId String @db.Uuid
+  existingResultId String? @db.Uuid
+  confidence Decimal? @db.Decimal(6,5)
+  reason String
+  status DuplicateStatus @default(OPEN)
+  importRow ImportRow @relation(fields: [importRowId], references: [id], onDelete: Cascade)
+  existingResult CandidateResult? @relation(fields: [existingResultId], references: [id], onDelete: SetNull)
+  @@index([status])
+}
+
+model PublicationVersion {
+  id String @id @default(uuid()) @db.Uuid
+  electionId String @db.Uuid
+  version Int
+  status PublicationStatus @default(DRAFT)
+  notes String?
+  createdById String? @db.Uuid
+  createdAt DateTime @default(now())
+  publishedAt DateTime?
+  election Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  @@unique([electionId, version])
+  @@index([electionId, status])
+}
+
 model User {
-  id           String @id @default(uuid()) @db.Uuid
-  email        String @unique
+  id String @id @default(uuid()) @db.Uuid
+  email String @unique
   passwordHash String?
-  role         UserRole @default(DATA_EDITOR)
-  active       Boolean @default(true)
-  createdAt    DateTime @default(now())
-  sessions     Session[]
-  auditLogs    AuditLog[]
+  role UserRole @default(DATA_EDITOR)
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  sessions Session[]
+  auditLogs AuditLog[]
+  importBatches ImportBatch[]
+  publications PublicationVersion[]
 }
 
 model Session {
-  id        String @id @default(uuid()) @db.Uuid
-  userId    String @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
   tokenHash String @unique
   expiresAt DateTime
-  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   @@index([userId, expiresAt])
 }
 
 model AuditLog {
-  id         String @id @default(uuid()) @db.Uuid
-  userId     String? @db.Uuid
-  action     String
+  id String @id @default(uuid()) @db.Uuid
+  userId String? @db.Uuid
+  action String
   entityType String
-  entityId   String?
-  oldValue   Json?
-  newValue   Json?
-  createdAt  DateTime @default(now())
-  user       User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  entityId String?
+  oldValue Json?
+  newValue Json?
+  createdAt DateTime @default(now())
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
   @@index([entityType, entityId])
   @@index([createdAt])
 }
