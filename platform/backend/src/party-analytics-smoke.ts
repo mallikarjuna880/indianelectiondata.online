@@ -89,7 +89,10 @@ try {
   const tiedWinRateRanking = rankParties(tiedComparison, 'winRate');
   assert.deepEqual(tiedWinRateRanking?.map((party) => party.rank), [1, 1, 3]);
 
+  // Publication guard: changing the election away from PUBLISHED must make
+  // every party analytics read path return no public election data.
   await prisma.election.update({ where: { id: election.id }, data: { sourceStatus: 'DRAFT' } });
+  assert.equal(await getPartyElectionPerformance(partyA.id), null);
   assert.equal(await getPartyPerformanceMetrics(partyA.id, election.id), null);
   assert.equal(await getPartyStatePerformance(partyA.id, election.id), null);
   assert.equal(await getPartyComparison(election.id), null);
