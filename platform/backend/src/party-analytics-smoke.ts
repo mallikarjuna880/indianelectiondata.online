@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { prisma } from './db.js';
 import { getPartyComparison, getPartyElectionPerformance, getPartyPerformanceMetrics, getPartyStatePerformance } from './analytics/party-analytics.js';
+import { rankParties } from './analytics/party-analytics-api.js';
 
 const state = await prisma.state.create({ data: { name: `4C Test State ${Date.now()}`, abbreviation: '4C' } });
 const election = await prisma.election.create({ data: { name: '4C Test Election', electionType: 'ASSEMBLY', year: 2099, sourceStatus: 'PUBLISHED' } });
@@ -61,12 +62,25 @@ try {
   assert.equal(comparison?.[1].partyId, partyB.id);
   assert.equal(comparison?.[1].votes, 400);
 
+  const seatRanking = rankParties(comparison, 'seats');
+  assert.equal(seatRanking?.[0].partyId, partyA.id);
+  assert.equal(seatRanking?.[0].rank, 1);
+  assert.equal(seatRanking?.[1].partyId, partyB.id);
+  assert.equal(seatRanking?.[1].rank, 2);
+  const voteRanking = rankParties(comparison, 'votes');
+  assert.equal(voteRanking?.[0].partyId, partyA.id);
+  assert.equal(voteRanking?.[0].metricValue, 600);
+  const shareRanking = rankParties(comparison, 'voteShare');
+  assert.equal(shareRanking?.[0].metricValue, 60);
+  const winRateRanking = rankParties(comparison, 'winRate');
+  assert.equal(winRateRanking?.[0].metricValue, 100);
+
   await prisma.election.update({ where: { id: election.id }, data: { sourceStatus: 'DRAFT' } });
   assert.equal(await getPartyPerformanceMetrics(partyA.id, election.id), null);
   assert.equal(await getPartyStatePerformance(partyA.id, election.id), null);
   assert.equal(await getPartyComparison(election.id), null);
 
-  console.log('4C.2 PARTY PERFORMANCE METRICS SMOKE: PASS');
+  console.log('4C.3 PARTY COMPARISON & RANKINGS SMOKE: PASS');
 } finally {
   await prisma.candidateResult.deleteMany({ where: { electionId: election.id } });
   await prisma.constituencyVersion.delete({ where: { id: version.id } });
