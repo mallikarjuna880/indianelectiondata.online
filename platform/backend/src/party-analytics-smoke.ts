@@ -75,6 +75,20 @@ try {
   const winRateRanking = rankParties(comparison, 'winRate');
   assert.equal(winRateRanking?.[0].metricValue, 100);
 
+  // Explicit tie regression: equal metric values share a rank, and the next
+  // distinct value receives the competition rank (1, 1, 3).
+  const tiedComparison = [
+    { ...comparison[0], seatsWon: 10, votes: 1000, voteShare: 50, winRate: 80 },
+    { ...comparison[1], seatsWon: 10, votes: 900, voteShare: 50, winRate: 80 },
+    { ...comparison[1], partyId: `${partyB.id}-third`, partyName: '4C Gamma Party', abbreviation: 'GAM', seatsWon: 8, votes: 800, voteShare: 40, winRate: 70 }
+  ];
+  const tiedSeatRanking = rankParties(tiedComparison, 'seats');
+  assert.deepEqual(tiedSeatRanking?.map((party) => party.rank), [1, 1, 3]);
+  const tiedVoteShareRanking = rankParties(tiedComparison, 'voteShare');
+  assert.deepEqual(tiedVoteShareRanking?.map((party) => party.rank), [1, 1, 3]);
+  const tiedWinRateRanking = rankParties(tiedComparison, 'winRate');
+  assert.deepEqual(tiedWinRateRanking?.map((party) => party.rank), [1, 1, 3]);
+
   await prisma.election.update({ where: { id: election.id }, data: { sourceStatus: 'DRAFT' } });
   assert.equal(await getPartyPerformanceMetrics(partyA.id, election.id), null);
   assert.equal(await getPartyStatePerformance(partyA.id, election.id), null);
