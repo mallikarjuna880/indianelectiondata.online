@@ -38,35 +38,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - name: Install dependencies
         run: npm install
-
       - name: Generate Prisma client
         run: npm run prisma:generate
-
       - name: Validate Prisma schema
         run: npm run prisma:validate
-
       - name: Run Prisma migrations
         run: npx prisma migrate deploy --schema platform/prisma/schema.prisma
-
       - name: Provision admin
         run: npm run admin:provision
-
       - name: Typecheck and build
         run: npm run typecheck && npm run build
-
       - name: Run analytics regression tests
         run: npx tsx --test platform/backend/src/analytics.test.ts
-
       - name: Run party analytics smoke test
         run: npx tsx platform/backend/src/party-analytics-smoke.ts
-
       - name: Start API
         working-directory: platform/backend
         run: npm start > /tmp/ied-api.log 2>&1 &
-
       - name: Wait for API
         run: |
           for i in {1..30}; do
@@ -75,10 +65,8 @@ jobs:
           done
           cat /tmp/ied-api.log
           exit 1
-
       - name: Full Phase 3 smoke test
         run: npx tsx platform/backend/src/phase3-smoke.ts
-
       - name: API logs on failure
         if: failure()
         run: cat /tmp/ied-api.log
