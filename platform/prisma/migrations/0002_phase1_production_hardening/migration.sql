@@ -12,6 +12,13 @@ CREATE TYPE "JurisdictionType" AS ENUM ('LOK_SABHA', 'ASSEMBLY', 'OTHER');
 ALTER TABLE "Election" ADD COLUMN "electionScope" "ElectionScope" NOT NULL DEFAULT 'GENERAL';
 ALTER TABLE "Election" ADD COLUMN "electionNumber" INTEGER;
 ALTER TABLE "Election" ADD COLUMN "status" "PublicationStatus" NOT NULL DEFAULT 'DRAFT';
+UPDATE "Election"
+SET "status" = CASE
+  WHEN "sourceStatus" = 'REVIEWED' THEN 'REVIEWED'::"PublicationStatus"
+  WHEN "sourceStatus" = 'PUBLISHED' THEN 'PUBLISHED'::"PublicationStatus"
+  ELSE 'DRAFT'::"PublicationStatus"
+END;
+ALTER TABLE "Election" DROP COLUMN "sourceStatus";
 CREATE UNIQUE INDEX "Election_electionType_year_electionNumber_key" ON "Election"("electionType", "year", "electionNumber");
 
 ALTER TABLE "State" ADD COLUMN "stateType" TEXT;
