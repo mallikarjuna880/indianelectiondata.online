@@ -73,9 +73,13 @@ CREATE TABLE "PartyHistory" (
   CONSTRAINT "PartyHistory_pkey" PRIMARY KEY ("id")
 );
 CREATE INDEX "PartyHistory_partyId_validFrom_idx" ON "PartyHistory"("partyId", "validFrom");
+ALTER TABLE "Party" ADD COLUMN "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "Party" ADD COLUMN "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
 ALTER TABLE "PartyHistory" ADD CONSTRAINT "PartyHistory_partyId_fkey" FOREIGN KEY ("partyId") REFERENCES "Party"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "Candidate" ADD COLUMN "normalizedName" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Candidate" ADD COLUMN "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "Candidate" ADD COLUMN "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
 CREATE INDEX "Candidate_normalizedName_idx" ON "Candidate"("normalizedName");
 
 CREATE TABLE "CandidateAlias" (
@@ -119,7 +123,15 @@ ALTER TABLE "ConstituencyStatistic" ADD CONSTRAINT "ConstituencyStatistic_nonneg
 );
 
 ALTER TABLE "DataSource" ADD COLUMN "documentUrl" TEXT;
-ALTER TABLE "DataSource" ADD COLUMN "sourceType" "SourceType" NOT NULL DEFAULT 'OTHER';
+ALTER TABLE "DataSource" ALTER COLUMN "sourceType" DROP DEFAULT;
+ALTER TABLE "DataSource" ALTER COLUMN "sourceType" TYPE "SourceType"
+  USING CASE
+    WHEN "sourceType" IS NULL OR "sourceType" = '' THEN 'OTHER'::"SourceType"
+    WHEN "sourceType" IN ('ECI', 'CEO', 'GOVERNMENT', 'DOCUMENT', 'DATASET', 'OTHER') THEN "sourceType"::"SourceType"
+    ELSE 'OTHER'::"SourceType"
+  END;
+ALTER TABLE "DataSource" ALTER COLUMN "sourceType" SET DEFAULT 'OTHER';
+ALTER TABLE "DataSource" ALTER COLUMN "sourceType" SET NOT NULL;
 ALTER TABLE "DataSource" ADD COLUMN "checksum" TEXT;
 ALTER TABLE "DataSource" ADD COLUMN "notes" TEXT;
 CREATE INDEX "DataSource_organization_idx" ON "DataSource"("organization");
